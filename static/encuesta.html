@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Encuesta de Percepción Ciudadana - Bucaramanga</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 20px;
+        color: #1a1a2e;
+    }
+    .contenedor {
+        max-width: 550px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    h1 {
+        font-size: 22px;
+        color: #16213e;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    p.intro {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+    label {
+        display: block;
+        font-weight: bold;
+        margin-top: 18px;
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+    select, textarea {
+        width: 100%;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    .escala {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+    }
+    .escala label {
+        font-weight: normal;
+        margin: 0;
+        text-align: center;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+    .escala input[type="radio"] {
+        margin: 0;
+    }
+    .radio-si-no {
+        display: flex;
+        gap: 20px;
+        margin-top: 6px;
+    }
+    .radio-si-no label {
+        font-weight: normal;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+    }
+    button {
+        width: 100%;
+        margin-top: 25px;
+        padding: 12px;
+        background: #3f6fa8;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+    button:hover { background: #345b8a; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    #mensaje {
+        text-align: center;
+        margin-top: 15px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .exito { color: #2a7a4b; }
+    .error { color: #b3403a; }
+</style>
+</head>
+<body>
+
+<div class="contenedor">
+    <h1>Encuesta de Percepción Ciudadana</h1>
+    <p class="intro">Área Metropolitana de Bucaramanga — tus respuestas son anónimas y se usan únicamente con fines académicos y de análisis agregado.</p>
+
+    <form id="formEncuesta">
+
+        <label for="comuna">¿En qué comuna vives?</label>
+        <select id="comuna" required>
+            <option value="">Selecciona una comuna...</option>
+        </select>
+
+        <label for="edad">Rango de edad</label>
+        <select id="edad" required>
+            <option value="">Selecciona un rango...</option>
+        </select>
+
+        <label for="sexo">Sexo</label>
+        <select id="sexo" required>
+            <option value="">Selecciona...</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMENINO">Femenino</option>
+            <option value="NO DISPONIBLE">Prefiero no decir</option>
+        </select>
+
+        <label>¿Qué tan seguro te sientes caminando en tu barrio de día?</label>
+        <div class="escala" id="escalaDia"></div>
+
+        <label>¿Qué tan seguro te sientes caminando en tu barrio de noche?</label>
+        <div class="escala" id="escalaNoche"></div>
+
+        <label>¿Con qué frecuencia observas mal uso del espacio público (basura, invasión de andenes, etc.)?</label>
+        <div class="escala" id="escalaMalUso"></div>
+
+        <label>¿Has participado en alguna actividad comunitaria en el último año?</label>
+        <div class="radio-si-no">
+            <label><input type="radio" name="participacion" value="true" required> Sí</label>
+            <label><input type="radio" name="participacion" value="false"> No</label>
+        </div>
+
+        <label for="comentario">Comentario adicional (opcional)</label>
+        <textarea id="comentario" rows="3" placeholder="¿Algo más que quieras contarnos sobre tu barrio?"></textarea>
+
+        <button type="submit" id="btnEnviar">Enviar respuesta</button>
+        <p id="mensaje"></p>
+    </form>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+// Genera las escalas de 1 a 5 dinámicamente para no repetir HTML tres veces
+function crearEscala(contenedorId, nombreGrupo, etiquetaBaja, etiquetaAlta) {
+    const contenedor = document.getElementById(contenedorId);
+    for (let i = 1; i <= 5; i++) {
+        const label = document.createElement("label");
+        const extra = i === 1 ? ` (${etiquetaBaja})` : i === 5 ? ` (${etiquetaAlta})` : "";
+        label.innerHTML = `<input type="radio" name="${nombreGrupo}" value="${i}" required>${i}${extra ? "<br><small style='font-size:9px'>" + extra.replace(/[()]/g,"") + "</small>" : ""}`;
+        contenedor.appendChild(label);
+    }
+}
+
+crearEscala("escalaDia", "seguridad_dia", "nada seguro", "muy seguro");
+crearEscala("escalaNoche", "seguridad_noche", "nada seguro", "muy seguro");
+crearEscala("escalaMalUso", "mal_uso", "nunca", "siempre");
+
+// Cargar comunas y rangos de edad desde la API
+async function cargarOpciones() {
+    const resComuna = await fetch(`${API}/encuestas/opciones-comuna`);
+    const comunas = await resComuna.json();
+    const selectComuna = document.getElementById("comuna");
+    comunas.forEach(c => {
+        const op = document.createElement("option");
+        op.value = c.id;
+        op.text = `${c.numero}. ${c.nombre}`;
+        selectComuna.appendChild(op);
+    });
+
+    const resEdad = await fetch(`${API}/encuestas/opciones-rango-edad`);
+    const edades = await resEdad.json();
+    const selectEdad = document.getElementById("edad");
+    edades.forEach(e => {
+        const op = document.createElement("option");
+        op.value = e.id;
+        op.text = e.rango;
+        selectEdad.appendChild(op);
+    });
+}
+
+cargarOpciones();
+
+// Envío del formulario
+document.getElementById("formEncuesta").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById("btnEnviar");
+    const mensaje = document.getElementById("mensaje");
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
+    mensaje.innerText = "";
+    mensaje.className = "";
+
+    const payload = {
+        comuna_id: parseInt(document.getElementById("comuna").value),
+        curso_vida_id: parseInt(document.getElementById("edad").value),
+        sexo: document.getElementById("sexo").value,
+        percepcion_seguridad_dia: parseInt(document.querySelector('input[name="seguridad_dia"]:checked').value),
+        percepcion_seguridad_noche: parseInt(document.querySelector('input[name="seguridad_noche"]:checked').value),
+        frecuencia_mal_uso_espacio: parseInt(document.querySelector('input[name="mal_uso"]:checked').value),
+        participacion_comunitaria: document.querySelector('input[name="participacion"]:checked').value === "true",
+        comentario: document.getElementById("comentario").value || null
+    };
+
+    try {
+        const res = await fetch(`${API}/encuestas/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            mensaje.innerText = "¡Gracias por tu respuesta! Ha sido registrada correctamente.";
+            mensaje.className = "exito";
+            document.getElementById("formEncuesta").reset();
+        } else {
+            const error = await res.json();
+            mensaje.innerText = "Hubo un problema al enviar tu respuesta. Intenta de nuevo.";
+            mensaje.className = "error";
+            console.error(error);
+        }
+    } catch (error) {
+        mensaje.innerText = "No se pudo conectar con el servidor.";
+        mensaje.className = "error";
+        console.error(error);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Enviar respuesta";
+    }
+});
+</script>
+
+</body>
+</html>
