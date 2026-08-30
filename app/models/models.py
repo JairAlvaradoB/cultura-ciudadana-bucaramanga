@@ -1,9 +1,10 @@
+from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Date, Time, ForeignKey, UniqueConstraint
+    Column, Integer, String, Date, Time, ForeignKey, UniqueConstraint,
+    Boolean, DateTime, Text
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
-
 
 # ============================================================
 # TABLAS DE DIMENSIÓN (catálogos)
@@ -120,4 +121,26 @@ class HechoDelictivo(Base):
     movil_victima = relationship("Movil", foreign_keys=[movil_victima_id])
     movil_agresor = relationship("Movil", foreign_keys=[movil_agresor_id])
     barrio = relationship("Barrio")
+    curso_vida = relationship("CursoVida")
+
+
+
+class EncuestaRespuesta(Base):
+    __tablename__ = "encuesta_respuesta"
+
+    id = Column(Integer, primary_key=True)
+
+    comuna_id = Column(Integer, ForeignKey("dim_comuna.id"), nullable=False)
+    curso_vida_id = Column(Integer, ForeignKey("dim_curso_vida.id"), nullable=False)
+    sexo = Column(String(20))
+
+    percepcion_seguridad_dia = Column(Integer, nullable=False)     # escala 1-5
+    percepcion_seguridad_noche = Column(Integer, nullable=False)   # escala 1-5
+    frecuencia_mal_uso_espacio = Column(Integer, nullable=False)   # escala 1-5
+    participacion_comunitaria = Column(Boolean, nullable=False)
+
+    comentario = Column(Text, nullable=True)
+    fecha_respuesta = Column(DateTime, default=datetime.utcnow)
+
+    comuna = relationship("Comuna")
     curso_vida = relationship("CursoVida")

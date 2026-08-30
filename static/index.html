@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Cultura Ciudadana - Bucaramanga</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 20px;
+        color: #1a1a2e;
+    }
+    h1 {
+        text-align: center;
+        color: #16213e;
+    }
+    .subtitulo {
+        text-align: center;
+        color: #555;
+        margin-bottom: 30px;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+        font-size: 16px;
+        color: #16213e;
+        margin-top: 0;
+    }
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    canvas {
+        max-height: 350px;
+    }
+    .estado {
+        text-align: center;
+        color: #888;
+        font-size: 13px;
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Plataforma de Cultura Ciudadana</h1>
+<p class="subtitulo">Área Metropolitana de Bucaramanga — datos de delitos (2016-2026) y percepción ciudadana</p>
+
+<div class="grid">
+    <div class="card full-width">
+        <h2>Casos registrados por comuna</h2>
+        <canvas id="graficoComuna"></canvas>
+    </div>
+
+    <div class="card full-width">
+        <h2>Tendencia de casos por año (2016-2026)</h2>
+        <canvas id="graficoTemporal"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Distribución por tipología de delito</h2>
+        <canvas id="graficoTipologia"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>Percepción de seguridad ciudadana (encuestas)</h2>
+        <canvas id="graficoPercepcion"></canvas>
+    </div>
+</div>
+
+<p class="estado" id="estado">Cargando datos desde la API...</p>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function cargarDatos() {
+    try {
+        // --- Casos por comuna ---
+        const resComuna = await fetch(`${API}/delitos/resumen-por-comuna`);
+        const dataComuna = await resComuna.json();
+
+        new Chart(document.getElementById("graficoComuna"), {
+            type: "bar",
+            data: {
+                labels: dataComuna.map(d => d.comuna),
+                datasets: [{
+                    label: "Casos totales",
+                    data: dataComuna.map(d => d.total_casos),
+                    backgroundColor: "#3f6fa8"
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 60 } } }
+            }
+        });
+
+        // --- Tendencia temporal ---
+        const resTemporal = await fetch(`${API}/delitos/resumen-temporal`);
+        const dataTemporal = await resTemporal.json();
+
+        // Agrupamos por año (sumando los 12 meses de cada año)
+        const porAnio = {};
+        dataTemporal.forEach(d => {
+            porAnio[d.anio] = (porAnio[d.anio] || 0) + d.total_casos;
+        });
+        const anios = Object.keys(porAnio).sort();
+
+        new Chart(document.getElementById("graficoTemporal"), {
+            type: "line",
+            data: {
+                labels: anios,
+                datasets: [{
+                    label: "Casos por año",
+                    data: anios.map(a => porAnio[a]),
+                    borderColor: "#e07a5f",
+                    backgroundColor: "rgba(224,122,95,0.15)",
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // --- Tipología ---
+        const resTipologia = await fetch(`${API}/delitos/resumen-por-tipologia`);
+        const dataTipologia = await resTipologia.json();
+
+        new Chart(document.getElementById("graficoTipologia"), {
+            type: "doughnut",
+            data: {
+                labels: dataTipologia.map(d => d.tipologia),
+                datasets: [{
+                    data: dataTipologia.map(d => d.total_casos),
+                    backgroundColor: ["#3f6fa8", "#e07a5f", "#81b29a", "#f2cc8f", "#a8577e"]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } }
+            }
+        });
+
+        // --- Percepción ciudadana (encuestas) ---
+        const resPercepcion = await fetch(`${API}/encuestas/resumen-por-comuna`);
+        const dataPercepcion = await resPercepcion.json();
+
+        if (dataPercepcion.length === 0) {
+            document.getElementById("graficoPercepcion").parentElement.innerHTML +=
+                "<p style='color:#999; font-size:13px;'>Aún no hay suficientes respuestas de encuesta para mostrar este gráfico.</p>";
+        } else {
+            new Chart(document.getElementById("graficoPercepcion"), {
+                type: "bar",
+                data: {
+                    labels: dataPercepcion.map(d => d.comuna),
+                    datasets: [
+                        {
+                            label: "Seguridad de día",
+                            data: dataPercepcion.map(d => d.promedio_seguridad_dia),
+                            backgroundColor: "#81b29a"
+                        },
+                        {
+                            label: "Seguridad de noche",
+                            data: dataPercepcion.map(d => d.promedio_seguridad_noche),
+                            backgroundColor: "#3f6fa8"
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { min: 0, max: 5 } }
+                }
+            });
+        }
+
+        document.getElementById("estado").innerText =
+            "Datos cargados correctamente — " + new Date().toLocaleString("es-CO");
+
+    } catch (error) {
+        document.getElementById("estado").innerText =
+            "Error al conectar con la API. Verifica que el servidor esté corriendo. (" + error + ")";
+        console.error(error);
+    }
+}
+
+cargarDatos();
+</script>
+
+</body>
+</html>
