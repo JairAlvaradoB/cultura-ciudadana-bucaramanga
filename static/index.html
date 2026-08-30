@@ -58,6 +58,14 @@
 <h1>Plataforma de Cultura Ciudadana</h1>
 <p class="subtitulo">Área Metropolitana de Bucaramanga — datos de delitos (2016-2026) y percepción ciudadana</p>
 
+<div style="text-align:center; margin-bottom: 25px;">
+    <label for="filtroAnio" style="font-weight:bold; margin-right:8px;">Filtrar por año:</label>
+    <select id="filtroAnio" style="padding:6px 12px; border-radius:6px; border:1px solid #ccc;">
+        <option value="">Todos los años (2016-2026)</option>
+    </select>
+    <span id="totalCasos" style="margin-left:20px; font-weight:bold; color:#3f6fa8;"></span>
+</div>
+
 <div class="grid">
     <div class="card full-width">
         <h2>Casos registrados por comuna</h2>
@@ -85,13 +93,25 @@
 <script>
 const API = "http://127.0.0.1:8000";
 
-async function cargarDatos() {
-    try {
-        // --- Casos por comuna ---
-        const resComuna = await fetch(`${API}/delitos/resumen-por-comuna`);
-        const dataComuna = await resComuna.json();
+let chartComuna, chartTipologia, chartTemporal, chartPercepcion;
 
-        new Chart(document.getElementById("graficoComuna"), {
+async function cargarComunaYTipologia(anio) {
+    const query = anio ? `?anio=${anio}` : "";
+
+    // --- Casos por comuna ---
+    const resComuna = await fetch(`${API}/delitos/resumen-por-comuna${query}`);
+    const dataComuna = await resComuna.json();
+
+    const totalCasos = dataComuna.reduce((suma, d) => suma + d.total_casos, 0);
+    document.getElementById("totalCasos").innerText =
+        `Total de casos ${anio ? "en " + anio : "(2016-2026)"}: ${totalCasos.toLocaleString("es-CO")}`;
+
+    if (chartComuna) {
+        chartComuna.data.labels = dataComuna.map(d => d.comuna);
+        chartComuna.data.datasets[0].data = dataComuna.map(d => d.total_casos);
+        chartComuna.update();
+    } else {
+        chartComuna = new Chart(document.getElementById("graficoComuna"), {
             type: "bar",
             data: {
                 labels: dataComuna.map(d => d.comuna),
@@ -107,19 +127,47 @@ async function cargarDatos() {
                 scales: { x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 60 } } }
             }
         });
+    }
 
-        // --- Tendencia temporal ---
+    // --- Tipología ---
+    const resTipologia = await fetch(`${API}/delitos/resumen-por-tipologia${query}`);
+    const dataTipologia = await resTipologia.json();
+
+    if (chartTipologia) {
+        chartTipologia.data.labels = dataTipologia.map(d => d.tipologia);
+        chartTipologia.data.datasets[0].data = dataTipologia.map(d => d.total_casos);
+        chartTipologia.update();
+    } else {
+        chartTipologia = new Chart(document.getElementById("graficoTipologia"), {
+            type: "doughnut",
+            data: {
+                labels: dataTipologia.map(d => d.tipologia),
+                datasets: [{
+                    data: dataTipologia.map(d => d.total_casos),
+                    backgroundColor: ["#3f6fa8", "#e07a5f", "#81b29a", "#f2cc8f", "#a8577e"]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } }
+            }
+        });
+    }
+}
+
+async function cargarDatos() {
+    try {
+        // --- Tendencia temporal (no cambia con el filtro, se carga una sola vez) ---
         const resTemporal = await fetch(`${API}/delitos/resumen-temporal`);
         const dataTemporal = await resTemporal.json();
 
-        // Agrupamos por año (sumando los 12 meses de cada año)
         const porAnio = {};
         dataTemporal.forEach(d => {
             porAnio[d.anio] = (porAnio[d.anio] || 0) + d.total_casos;
         });
         const anios = Object.keys(porAnio).sort();
 
-        new Chart(document.getElementById("graficoTemporal"), {
+        chartTemporal = new Chart(document.getElementById("graficoTemporal"), {
             type: "line",
             data: {
                 labels: anios,
@@ -135,24 +183,21 @@ async function cargarDatos() {
             options: { responsive: true }
         });
 
-        // --- Tipología ---
-        const resTipologia = await fetch(`${API}/delitos/resumen-por-tipologia`);
-        const dataTipologia = await resTipologia.json();
-
-        new Chart(document.getElementById("graficoTipologia"), {
-            type: "doughnut",
-            data: {
-                labels: dataTipologia.map(d => d.tipologia),
-                datasets: [{
-                    data: dataTipologia.map(d => d.total_casos),
-                    backgroundColor: ["#3f6fa8", "#e07a5f", "#81b29a", "#f2cc8f", "#a8577e"]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } }
-            }
+        // Llenar el filtro de años dinámicamente con los años que sí existen en los datos
+        const selectAnio = document.getElementById("filtroAnio");
+        anios.forEach(a => {
+            const opcion = document.createElement("option");
+            opcion.value = a;
+            opcion.text = a == "2026" ? `${a} (año incompleto)` : a;
+            selectAnio.appendChild(opcion);
         });
+
+        selectAnio.addEventListener("change", (e) => {
+            cargarComunaYTipologia(e.target.value);
+        });
+
+        // --- Carga inicial (todos los años) ---
+        await cargarComunaYTipologia("");
 
         // --- Percepción ciudadana (encuestas) ---
         const resPercepcion = await fetch(`${API}/encuestas/resumen-por-comuna`);
@@ -162,7 +207,7 @@ async function cargarDatos() {
             document.getElementById("graficoPercepcion").parentElement.innerHTML +=
                 "<p style='color:#999; font-size:13px;'>Aún no hay suficientes respuestas de encuesta para mostrar este gráfico.</p>";
         } else {
-            new Chart(document.getElementById("graficoPercepcion"), {
+            chartPercepcion = new Chart(document.getElementById("graficoPercepcion"), {
                 type: "bar",
                 data: {
                     labels: dataPercepcion.map(d => d.comuna),
@@ -198,6 +243,3 @@ async function cargarDatos() {
 
 cargarDatos();
 </script>
-
-</body>
-</html>
