@@ -86,7 +86,27 @@
         <h2>Percepción de seguridad ciudadana (encuestas)</h2>
         <canvas id="graficoPercepcion"></canvas>
     </div>
+
+    <div class="card">
+        <h2>Sentimiento en comentarios de YouTube (Vanguardia)</h2>
+        <canvas id="graficoSentimiento"></canvas>
+    </div>
+
+    <div class="card full-width">
+        <h2>Comentarios recientes analizados</h2>
+        <div id="listaComentarios" style="font-size:13px; max-height:250px; overflow-y:auto;"></div>
+    </div>
 </div>
+
+    <div class="card full-width">
+        <h2>Pregúntale al asistente de la plataforma</h2>
+        <div id="chatVentana" style="height:300px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:12px; margin-bottom:10px; background:#fafafa;"></div>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="chatInput" placeholder="Ej: ¿qué comuna tiene más hurtos en 2024?"
+                   style="flex:1; padding:10px; border-radius:6px; border:1px solid #ccc;">
+            <button id="chatBoton" style="padding:10px 20px; background:#3f6fa8; color:white; border:none; border-radius:6px; cursor:pointer;">Enviar</button>
+        </div>
+    </div>
 
 <p class="estado" id="estado">Cargando datos desde la API...</p>
 
@@ -231,6 +251,45 @@ async function cargarDatos() {
             });
         }
 
+               // --- Sentimiento en redes sociales (YouTube) ---
+        const resSentimiento = await fetch(`${API}/redes-sociales/resumen-sentimiento`);
+        const dataSentimiento = await resSentimiento.json();
+
+        const coloresSentimiento = {
+            "POSITIVO": "#81b29a",
+            "NEGATIVO": "#e07a5f",
+            "NEUTRAL": "#c9c9c9"
+        };
+
+        new Chart(document.getElementById("graficoSentimiento"), {
+            type: "doughnut",
+            data: {
+                labels: dataSentimiento.map(d => d.sentimiento),
+                datasets: [{
+                    data: dataSentimiento.map(d => d.total),
+                    backgroundColor: dataSentimiento.map(d => coloresSentimiento[d.sentimiento] || "#999")
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: "bottom" } }
+            }
+        });
+
+        // --- Lista de comentarios recientes ---
+        const resComentarios = await fetch(`${API}/redes-sociales/comentarios-recientes?limite=15`);
+        const dataComentarios = await resComentarios.json();
+
+        const iconoSentimiento = { POSITIVO: "🟢", NEGATIVO: "🔴", NEUTRAL: "⚪" };
+        const listaHtml = dataComentarios.map(c => `
+            <div style="padding:8px 0; border-bottom:1px solid #eee;">
+                <span>${iconoSentimiento[c.sentimiento] || ""} <strong>${c.sentimiento}</strong> (${c.confianza}%)</span>
+                <p style="margin:4px 0; color:#333;">"${c.comentario}"</p>
+                <p style="margin:0; color:#999; font-size:11px;">${c.video_titulo}</p>
+            </div>
+        `).join("");
+        document.getElementById("listaComentarios").innerHTML = listaHtml;
+       
         document.getElementById("estado").innerText =
             "Datos cargados correctamente — " + new Date().toLocaleString("es-CO");
 
@@ -242,4 +301,61 @@ async function cargarDatos() {
 }
 
 cargarDatos();
+
+function agregarMensajeChat(texto, esUsuario) {
+    const ventana = document.getElementById("chatVentana");
+    const burbuja = document.createElement("div");
+    burbuja.style.margin = "8px 0";
+    burbuja.style.padding = "10px";
+    burbuja.style.borderRadius = "8px";
+    burbuja.style.maxWidth = "80%";
+    burbuja.style.whiteSpace = "pre-wrap";
+    if (esUsuario) {
+        burbuja.style.background = "#3f6fa8";
+        burbuja.style.color = "white";
+        burbuja.style.marginLeft = "auto";
+    } else {
+        burbuja.style.background = "#e9ecef";
+        burbuja.style.color = "#1a1a2e";
+    }
+    burbuja.innerText = texto;
+    ventana.appendChild(burbuja);
+    ventana.scrollTop = ventana.scrollHeight;
+}
+
+async function enviarMensajeChat() {
+    const input = document.getElementById("chatInput");
+    const boton = document.getElementById("chatBoton");
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    agregarMensajeChat(texto, true);
+    input.value = "";
+    boton.disabled = true;
+    agregarMensajeChat("Pensando...", false);
+
+    try {
+        const res = await fetch(`${API}/chat/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mensaje: texto })
+        });
+        const data = await res.json();
+
+        document.getElementById("chatVentana").lastChild.remove(); // quita "Pensando..."
+        agregarMensajeChat(data.respuesta, false);
+    } catch (error) {
+        document.getElementById("chatVentana").lastChild.remove();
+        agregarMensajeChat("Hubo un error al conectar con el asistente.", false);
+    } finally {
+        boton.disabled = false;
+    }
+}
+
+document.getElementById("chatBoton").addEventListener("click", enviarMensajeChat);
+document.getElementById("chatInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") enviarMensajeChat();
+});
+
+agregarMensajeChat("Hola, soy el asistente de la plataforma. Pregúntame sobre delitos, percepción ciudadana o redes sociales en Bucaramanga.", false);
 </script>

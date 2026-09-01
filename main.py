@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
 from app.models import models
-from app.routes import delitos, encuestas, redes_sociales
+from app.routes import delitos, encuestas, redes_sociales, chat
 
 app = FastAPI(title="Plataforma de Cultura Ciudadana - Bucaramanga")
 
@@ -19,6 +19,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(delitos.router)
 app.include_router(encuestas.router)
 app.include_router(redes_sociales.router)
+app.include_router(chat.router)
 
 app.mount("/dashboard", StaticFiles(directory="static", html=True), name="dashboard")
 
