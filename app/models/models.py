@@ -144,3 +144,18 @@ class EncuestaRespuesta(Base):
 
     comuna = relationship("Comuna")
     curso_vida = relationship("CursoVida")
+
+
+class RedSocialComentario(Base):
+    __tablename__ = "red_social_comentario"
+
+    id = Column(Integer, primary_key=True)
+
+    video_id = Column(String(30), nullable=False)
+    video_titulo = Column(String(300), nullable=False)
+    comentario_texto = Column(Text, nullable=False)
+
+    sentimiento = Column(String(20), nullable=False)   # POSITIVO / NEGATIVO / NEUTRAL
+    confianza = Column(Integer, nullable=False)          # 0-100, qué tan segura está la IA de su clasificación
+
+    fecha_extraccion = Column(DateTime, default=datetime.utcnow)
