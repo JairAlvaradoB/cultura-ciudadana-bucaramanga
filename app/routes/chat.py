@@ -86,3 +86,31 @@ def chat(mensaje: MensajeChat):
     respuesta = chat_session.send_message(mensaje.mensaje)
 
     return {"respuesta": respuesta.text}
+
+
+@router.get("/informe")
+def generar_informe():
+    """Genera un informe ejecutivo completo usando IA, basado en los datos reales de la plataforma."""
+    chat_session = client.chats.create(
+        model="gemini-3.6-flash",
+        config=types.GenerateContentConfig(
+            system_instruction=INSTRUCCION_SISTEMA,
+            tools=HERRAMIENTAS,
+        ),
+    )
+
+    prompt = """Genera un informe ejecutivo completo sobre cultura ciudadana en Bucaramanga,
+en español, con estas secciones exactas:
+
+1. Resumen general (total de casos, comuna con más casos, comuna con menos casos)
+2. Tipologia de delitos predominante y su interpretación
+3. Percepción ciudadana según las encuestas disponibles
+4. Análisis de sentimiento en redes sociales
+5. Hallazgos clave (2 o 3 conclusiones importantes cruzando las fuentes)
+6. Recomendaciones para la gestión pública (2 o 3 recomendaciones concretas)
+
+Usa ÚNICAMENTE datos reales obtenidos con las herramientas disponibles, cita cifras exactas,
+y escribe en tono profesional e institucional. No inventes datos que no puedas consultar."""
+
+    respuesta = chat_session.send_message(prompt)
+    return {"informe": respuesta.text}

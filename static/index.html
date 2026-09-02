@@ -2,360 +2,672 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Cultura Ciudadana - Bucaramanga</title>
+<title>Plataforma de Cultura Ciudadana — Bucaramanga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f8;
-        margin: 0;
-        padding: 20px;
-        color: #1a1a2e;
+    :root {
+        --azul: #3B5A6E; --azul-claro: #4C7085; --dorado: #C2A66B; --vino: #B0707A;
+        --fondo: #F7F8FA; --superficie: #FFFFFF; --borde: #E1E4E8;
+        --texto: #1F2933; --texto-suave: #5A6672;
     }
-    h1 {
-        text-align: center;
-        color: #16213e;
+    * { box-sizing: border-box; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); font-size: 17px; }
+
+    header { background: var(--superficie); border-bottom: 3px solid var(--azul); padding: 26px 48px; display: flex; align-items: center; gap: 22px; }
+    .logo-plataforma {
+        width: 64px; height: 64px; border-radius: 12px;
+        background: var(--azul); display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
     }
-    .subtitulo {
-        text-align: center;
-        color: #555;
-        margin-bottom: 30px;
+    .logo-plataforma svg { width: 38px; height: 38px; }
+    .header-texto { flex: 1; }
+    header .marca { font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dorado); font-weight: 600; margin: 0 0 6px; }
+    header h1 { font-family: 'Source Serif 4', serif; font-weight: 600; font-size: 32px; color: var(--azul); margin: 0 0 6px; }
+    header p:last-child { margin: 0; color: var(--texto-suave); font-size: 15px; }
+
+    .layout { display: grid; grid-template-columns: 1fr 400px; gap: 0; align-items: start; }
+
+    main { padding: 36px 48px 80px; }
+
+    aside {
+        position: sticky; top: 0; height: 100vh;
+        background: var(--superficie); border-left: 1px solid var(--borde);
+        padding: 30px 28px; display: flex; flex-direction: column;
     }
-    .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
+    .avatar-ia {
+        width: 60px; height: 60px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--azul), var(--azul-claro));
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 16px; flex-shrink: 0;
     }
-    .card {
-        background: white;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    .avatar-ia svg { width: 32px; height: 32px; }
+    aside h2 { font-family: 'Source Serif 4', serif; font-size: 22px; color: var(--azul); margin: 0 0 6px; }
+    aside p.subtexto { color: var(--texto-suave); font-size: 15px; margin: 0 0 20px; }
+    #chatVentana { flex: 1; overflow-y: auto; background: #F7F8FA; border: 1px solid var(--borde); border-radius: 6px; padding: 16px; margin-bottom: 14px; min-height: 340px; }
+    .msg { margin: 0 0 12px; padding: 12px 15px; border-radius: 6px; max-width: 92%; font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
+    .msg-usuario { background: var(--azul); color: white; margin-left: auto; }
+    .msg-agente { background: white; color: var(--texto); border: 1px solid var(--borde); }
+    .fila-chat { display: flex; gap: 10px; }
+    #chatInput { flex: 1; padding: 12px 14px; border-radius: 6px; border: 1px solid var(--borde); font-family: inherit; font-size: 15px; }
+    #chatBoton { padding: 12px 18px; background: var(--azul); color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 15px; }
+    #chatBoton:hover { background: var(--azul-claro); }
+    #chatBoton:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 26px; }
+    .kpi { background: var(--superficie); border: 1px solid var(--borde); border-left: 4px solid var(--azul); padding: 20px 22px; }
+    .kpi.acento-dorado { border-left-color: var(--dorado); }
+    .kpi.acento-vino { border-left-color: var(--vino); }
+    .kpi .etiqueta { font-size: 14px; color: var(--texto-suave); margin: 0 0 8px; }
+    .kpi .valor { font-family: 'Source Serif 4', serif; font-size: 36px; font-weight: 600; margin: 0; color: var(--azul); }
+
+    .barra-acciones { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+    .btn-accion {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 11px 18px; border-radius: 6px; font-size: 14px; font-weight: 500;
+        cursor: pointer; border: 1px solid var(--azul); background: var(--azul); color: white;
     }
-    .card h2 {
-        font-size: 16px;
-        color: #16213e;
-        margin-top: 0;
-    }
-    .full-width {
-        grid-column: 1 / -1;
-    }
-    canvas {
-        max-height: 350px;
-    }
-    .estado {
-        text-align: center;
-        color: #888;
-        font-size: 13px;
-        margin-top: 40px;
+    .btn-accion:hover { background: var(--azul-claro); }
+    .btn-accion:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .controles { display: flex; align-items: center; gap: 18px; margin-bottom: 30px; padding-bottom: 22px; border-bottom: 1px solid var(--borde); flex-wrap: wrap; }
+    .controles label { font-size: 15px; font-weight: 500; color: var(--texto-suave); }
+    .controles select { padding: 9px 14px; border-radius: 4px; border: 1px solid var(--borde); font-family: inherit; font-size: 15px; background: white; }
+    #totalCasos { font-size: 15px; color: var(--texto-suave); }
+
+    h2.seccion { font-family: 'Source Serif 4', serif; font-size: 24px; font-weight: 600; color: var(--azul); margin: 46px 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--borde); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 24px; grid-auto-flow: dense; }
+    .card { background: var(--superficie); border: 1px solid var(--borde); border-radius: 4px; padding: 26px; }
+    .card h3 { font-size: 17px; font-weight: 500; color: var(--texto-suave); margin: 0 0 20px; }
+    .full-width { grid-column: 1 / -1; }
+    canvas { max-height: 420px; }
+
+    .lista-comentarios { font-size: 15px; }
+    .comentario { padding: 14px 0; border-bottom: 1px solid var(--borde); }
+    .comentario:last-child { border-bottom: none; }
+    .etiqueta-sentimiento { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 3px; display: inline-block; }
+    .sent-positivo { background: #E7F0EA; color: #3E6B54; }
+    .sent-negativo { background: #F3E6E8; color: var(--vino); }
+    .sent-neutral { background: #EDEEF0; color: var(--texto-suave); }
+    .comentario p.texto { margin: 8px 0 4px; line-height: 1.55; }
+    .comentario p.origen { margin: 0; color: var(--texto-suave); font-size: 13px; }
+
+    footer { text-align: center; color: var(--texto-suave); font-size: 13px; padding: 24px; }
+
+    @media (max-width: 1100px) {
+        .layout { grid-template-columns: 1fr; }
+        aside { position: static; height: auto; border-left: none; border-top: 1px solid var(--borde); }
+        .kpis { grid-template-columns: 1fr 1fr; }
     }
 </style>
 </head>
 <body>
 
-<h1>Plataforma de Cultura Ciudadana</h1>
-<p class="subtitulo">Área Metropolitana de Bucaramanga — datos de delitos (2016-2026) y percepción ciudadana</p>
+<header>
+    <div class="logo-plataforma">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 38V22L11 18V38H6Z" fill="white" opacity="0.55"/>
+            <path d="M13 38V14L19 10V38H13Z" fill="white" opacity="0.75"/>
+            <path d="M21 38V6L28 6V38H21Z" fill="white"/>
+            <path d="M30 38V16L36 12V38H30Z" fill="white" opacity="0.75"/>
+            <path d="M38 38V24L42 20V38H38Z" fill="white" opacity="0.55"/>
+            <path d="M4 30L12 30L16 24L20 33L25 20L29 27L33 22L38 27L44 27" stroke="#C2A66B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </div>
+    <div class="header-texto">
+        <p class="marca">Área Metropolitana de Bucaramanga</p>
+        <h1>Plataforma de cultura ciudadana</h1>
+        <p>Integración de datos delictivos, percepción ciudadana y análisis de opinión pública (2016-2026)</p>
+    </div>
+</header>
 
-<div style="text-align:center; margin-bottom: 25px;">
-    <label for="filtroAnio" style="font-weight:bold; margin-right:8px;">Filtrar por año:</label>
-    <select id="filtroAnio" style="padding:6px 12px; border-radius:6px; border:1px solid #ccc;">
-        <option value="">Todos los años (2016-2026)</option>
-    </select>
-    <span id="totalCasos" style="margin-left:20px; font-weight:bold; color:#3f6fa8;"></span>
-</div>
-
-<div class="grid">
-    <div class="card full-width">
-        <h2>Casos registrados por comuna</h2>
-        <canvas id="graficoComuna"></canvas>
+<div class="layout">
+<main id="contenidoPrincipal">
+    <div class="kpis">
+        <div class="kpi"><p class="etiqueta">Total de casos registrados</p><p class="valor" id="kpiTotalCasos">—</p></div>
+        <div class="kpi acento-dorado"><p class="etiqueta">Respuestas de encuesta</p><p class="valor" id="kpiEncuestas">—</p></div>
+        <div class="kpi acento-vino"><p class="etiqueta">Comentarios analizados</p><p class="valor" id="kpiComentarios">—</p></div>
+        <div class="kpi"><p class="etiqueta">Comunas monitoreadas</p><p class="valor" id="kpiComunas">—</p></div>
     </div>
 
-    <div class="card full-width">
-        <h2>Tendencia de casos por año (2016-2026)</h2>
-        <canvas id="graficoTemporal"></canvas>
+    <div class="barra-acciones">
+        <button class="btn-accion" id="btnDescargarPDF">Descargar informe (PDF)</button>
     </div>
 
-    <div class="card">
-        <h2>Distribución por tipología de delito</h2>
-        <canvas id="graficoTipologia"></canvas>
+    <div class="controles">
+        <label for="filtroAnio">Filtrar por año</label>
+        <select id="filtroAnio"><option value="">Todos los años (2016-2026)</option></select>
+        <span id="totalCasos"></span>
     </div>
 
-    <div class="card">
-        <h2>Percepción de seguridad ciudadana (encuestas)</h2>
-        <canvas id="graficoPercepcion"></canvas>
+    <h2 class="seccion">Delitos registrados</h2>
+    <div class="grid">
+        <div class="card full-width"><h3>Casos por comuna</h3><canvas id="g1"></canvas></div>
+        <div class="card"><h3>Tendencia anual (2016-2026)</h3><canvas id="g5"></canvas></div>
+        <div class="card"><h3>Distribución por tipología</h3><canvas id="g8"></canvas></div>
+        <div class="card full-width"><h3>Top 10 barrios con más casos</h3><canvas id="g16"></canvas></div>
     </div>
 
-    <div class="card">
-        <h2>Sentimiento en comentarios de YouTube (Vanguardia)</h2>
-        <canvas id="graficoSentimiento"></canvas>
-    </div>
-
-    <div class="card full-width">
-        <h2>Comentarios recientes analizados</h2>
-        <div id="listaComentarios" style="font-size:13px; max-height:250px; overflow-y:auto;"></div>
-    </div>
-</div>
-
-    <div class="card full-width">
-        <h2>Pregúntale al asistente de la plataforma</h2>
-        <div id="chatVentana" style="height:300px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:12px; margin-bottom:10px; background:#fafafa;"></div>
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="chatInput" placeholder="Ej: ¿qué comuna tiene más hurtos en 2024?"
-                   style="flex:1; padding:10px; border-radius:6px; border:1px solid #ccc;">
-            <button id="chatBoton" style="padding:10px 20px; background:#3f6fa8; color:white; border:none; border-radius:6px; cursor:pointer;">Enviar</button>
+    <h2 class="seccion">Cuándo y cómo ocurren los delitos</h2>
+    <div class="grid">
+        <div class="card full-width"><h3>Casos por rango horario del día</h3><canvas id="gRango"></canvas></div>
+        <div class="card full-width"><h3>Rango horario por tipología de delito</h3><canvas id="gRangoTip"></canvas></div>
+        <div class="card full-width">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+                <h3 style="margin:0;">Tendencia mensual por tipología</h3>
+                <select id="filtroAnioTendencia" style="padding:8px 12px; border-radius:4px; border:1px solid var(--borde); font-family:inherit; font-size:14px; background:white;">
+                    <option value="">Todos los años (2016-2026)</option>
+                </select>
+            </div>
+            <canvas id="gTendTip"></canvas>
         </div>
+        <div class="card full-width"><h3>Móvil de la víctima al momento del hecho</h3><canvas id="gMovil"></canvas></div>
+        <div class="card"><h3>Casos por sexo de la víctima</h3><canvas id="gSexoChico"></canvas></div>
+        <div class="card full-width"><h3>Pirámide de edad de las víctimas por sexo</h3><canvas id="gPiramide"></canvas></div>
     </div>
 
-<p class="estado" id="estado">Cargando datos desde la API...</p>
+    <h2 class="seccion">Percepción ciudadana y redes sociales</h2>
+    <div class="grid">
+        <div class="card"><h3>Percepción de seguridad día/noche por comuna</h3><canvas id="g7"></canvas></div>
+        <div class="card"><h3>Sentimiento en comentarios de YouTube</h3><canvas id="g2"></canvas></div>
+    </div>
+
+    <h2 class="seccion">Comentarios recientes analizados</h2>
+    <div class="grid">
+        <div class="card full-width"><div class="lista-comentarios" id="listaComentarios"></div></div>
+    </div>
+</main>
+
+<aside>
+    <div class="avatar-ia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="8" width="16" height="12" rx="2"></rect>
+            <path d="M12 8V4"></path><circle cx="12" cy="3" r="1"></circle>
+            <circle cx="9" cy="14" r="1.2"></circle><circle cx="15" cy="14" r="1.2"></circle>
+            <path d="M9 18h6"></path>
+        </svg>
+    </div>
+    <h2>Asistente de la plataforma</h2>
+    <p class="subtexto">Pregunta sobre delitos, percepción ciudadana o redes sociales en Bucaramanga.</p>
+    <div id="chatVentana"></div>
+    <div class="fila-chat">
+        <input type="text" id="chatInput" placeholder="Escribe tu pregunta...">
+        <button id="chatBoton">Enviar</button>
+    </div>
+</aside>
+</div>
+
+<footer>Plataforma de gestión de datos para el monitoreo de cultura ciudadana — Unidades Tecnológicas de Santander</footer>
 
 <script>
 const API = "http://127.0.0.1:8000";
+const PALETA = ["#3B5A6E", "#C2A66B", "#B0707A", "#7FA6A0", "#A08D6B", "#8FAF8B", "#9B87A0"];
+let charts = {};
 
-let chartComuna, chartTipologia, chartTemporal, chartPercepcion;
+Chart.defaults.locale = "es-CO";
+Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+Chart.defaults.font.size = 14;
+Chart.defaults.animation.duration = 650;
+Chart.defaults.animation.easing = "easeOutQuart";
+Chart.defaults.plugins.legend.labels.font = { size: 13 };
+Chart.defaults.plugins.tooltip.padding = 11;
+Chart.defaults.plugins.tooltip.titleFont = { size: 14, weight: "bold" };
+Chart.defaults.plugins.tooltip.bodyFont = { size: 13 };
+Chart.defaults.plugins.tooltip.cornerRadius = 4;
 
-async function cargarComunaYTipologia(anio) {
-    const query = anio ? `?anio=${anio}` : "";
+const mapaColores = {};
+let siguienteColor = 0;
+function colorPara(nombre) {
+    if (!mapaColores[nombre]) { mapaColores[nombre] = PALETA[siguienteColor % PALETA.length]; siguienteColor++; }
+    return mapaColores[nombre];
+}
 
-    // --- Casos por comuna ---
-    const resComuna = await fetch(`${API}/delitos/resumen-por-comuna${query}`);
-    const dataComuna = await resComuna.json();
+function crearOActualizar(id, config) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), config);
+}
 
-    const totalCasos = dataComuna.reduce((suma, d) => suma + d.total_casos, 0);
-    document.getElementById("totalCasos").innerText =
-        `Total de casos ${anio ? "en " + anio : "(2016-2026)"}: ${totalCasos.toLocaleString("es-CO")}`;
+function marcarError(idCanvas, mensaje) {
+    const canvas = document.getElementById(idCanvas);
+    console.error(`Error en ${idCanvas}:`, mensaje);
+    canvas.style.display = "none";
+    const contenedor = canvas.parentElement;
+    if (!contenedor.querySelector(".mensaje-error")) {
+        const p = document.createElement("p");
+        p.className = "mensaje-error";
+        p.style.cssText = "color:#B0707A; font-size:14px;";
+        p.innerText = "No se pudo cargar esta gráfica. Ver consola para detalles.";
+        contenedor.appendChild(p);
+    }
+}
 
-    if (chartComuna) {
-        chartComuna.data.labels = dataComuna.map(d => d.comuna);
-        chartComuna.data.datasets[0].data = dataComuna.map(d => d.total_casos);
-        chartComuna.update();
-    } else {
-        chartComuna = new Chart(document.getElementById("graficoComuna"), {
+async function obtener(ruta) {
+    const r = await fetch(`${API}${ruta}`);
+    if (!r.ok) throw new Error(`${ruta} respondió ${r.status}`);
+    return r.json();
+}
+
+async function seguro(tarea, ids) {
+    try { await tarea(); } catch (error) { ids.forEach(id => marcarError(id, error.message)); }
+}
+
+async function cargarDelitos(anioFiltro) {
+    const query = anioFiltro ? `?anio=${anioFiltro}` : "";
+
+    await seguro(async () => {
+        const dataComuna = await obtener(`/delitos/resumen-por-comuna${query}`);
+        const totalCasos = dataComuna.reduce((s, d) => s + d.total_casos, 0);
+        document.getElementById("totalCasos").innerText = `Total ${anioFiltro ? "en " + anioFiltro : "(2016-2026)"}: ${totalCasos.toLocaleString("es-CO")} casos`;
+        if (!anioFiltro) document.getElementById("kpiTotalCasos").innerText = totalCasos.toLocaleString("es-CO");
+        document.getElementById("kpiComunas").innerText = dataComuna.length;
+
+        crearOActualizar("g1", {
             type: "bar",
-            data: {
-                labels: dataComuna.map(d => d.comuna),
-                datasets: [{
-                    label: "Casos totales",
-                    data: dataComuna.map(d => d.total_casos),
-                    backgroundColor: "#3f6fa8"
-                }]
-            },
+            data: { labels: dataComuna.map(d => d.comuna), datasets: [{ label: "Casos", data: dataComuna.map(d => d.total_casos), backgroundColor: "#3B5A6E" }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 60, font: { size: 13 } } }, y: { ticks: { font: { size: 13 } } } } }
+        });
+    }, ["g1"]);
+
+    await seguro(async () => {
+        const tip = await obtener(`/delitos/resumen-por-tipologia${query}`);
+        crearOActualizar("g8", {
+            type: "pie",
+            data: { labels: tip.map(d => d.tipologia), datasets: [{ data: tip.map(d => d.total_casos), backgroundColor: tip.map(d => colorPara(d.tipologia)) }] },
+            options: { responsive: true, plugins: {
+                legend: { position: "bottom", labels: { boxWidth: 13, font: { size: 13 } } },
+                datalabels: { color: "white", font: { weight: "bold", size: 13 }, formatter: (v, ctx) => { const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0); return ((v/total)*100).toFixed(1) + "%"; } }
+            } }
+        });
+    }, ["g8"]);
+}
+
+async function cargarTendenciaMensual(anioFiltro) {
+    await seguro(async () => {
+        const raw = await obtener("/delitos/tendencia-mensual-por-tipologia");
+        const filtrado = anioFiltro ? raw.filter(d => d.anio == anioFiltro) : raw;
+        const claves = [...new Set(filtrado.map(d => `${d.anio}-${String(d.mes).padStart(2, "0")}`))].sort();
+        const tipologias = [...new Set(filtrado.map(d => d.tipologia))];
+        crearOActualizar("gTendTip", {
+            type: "line",
+            data: { labels: claves, datasets: tipologias.map(t => ({
+                label: t,
+                data: claves.map(k => { const [a, m] = k.split("-"); return filtrado.find(d => d.anio == a && d.mes == m && d.tipologia === t)?.total_casos || 0; }),
+                backgroundColor: colorPara(t), borderColor: colorPara(t), fill: true, tension: 0.25, pointRadius: anioFiltro ? 3 : 0
+            })) },
+            options: { responsive: true, scales: { x: { ticks: { maxRotation: 60, minRotation: 60, font: { size: anioFiltro ? 13 : 10 }, autoSkip: !anioFiltro, maxTicksLimit: 24 } }, y: { stacked: true, ticks: { font: { size: 13 } } } }, plugins: { legend: { labels: { font: { size: 13 }, boxWidth: 13 } } } }
+        });
+    }, ["gTendTip"]);
+}
+
+async function cargarSeccionHoraria() {
+    await seguro(async () => {
+        const rango = await obtener("/delitos/resumen-por-rango-horario");
+        crearOActualizar("gRango", {
+            type: "bar",
+            data: { labels: rango.map(d => d.rango), datasets: [{ label: "Casos", data: rango.map(d => d.total_casos), backgroundColor: "#C2A66B" }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 60, minRotation: 60, font: { size: 13 } } }, y: { ticks: { font: { size: 13 } } } } }
+        });
+    }, ["gRango"]);
+
+    await seguro(async () => {
+        const rangoTip = await obtener("/delitos/rango-horario-por-tipologia");
+        const rangos = [...new Set(rangoTip.map(d => d.rango))];
+        const tipologias = [...new Set(rangoTip.map(d => d.tipologia))];
+        crearOActualizar("gRangoTip", {
+            type: "bar",
+            data: { labels: rangos, datasets: tipologias.map(t => ({
+                label: t,
+                data: rangos.map(r => rangoTip.find(d => d.rango === r && d.tipologia === t)?.total_casos || 0),
+                backgroundColor: colorPara(t)
+            })) },
+            options: { responsive: true, scales: { x: { stacked: true, ticks: { maxRotation: 60, minRotation: 60, font: { size: 13 } } }, y: { stacked: true, ticks: { font: { size: 13 } } } }, plugins: { legend: { labels: { font: { size: 13 }, boxWidth: 13 } } } }
+        });
+    }, ["gRangoTip"]);
+
+    await seguro(async () => {
+        const temporal = await obtener("/delitos/resumen-temporal");
+        const anios = [...new Set(temporal.map(d => d.anio))].sort();
+        const select = document.getElementById("filtroAnioTendencia");
+        anios.forEach(a => {
+            const opcion = document.createElement("option");
+            opcion.value = a; opcion.text = a == "2026" ? `${a} (incompleto)` : a;
+            select.appendChild(opcion);
+        });
+        select.addEventListener("change", (e) => cargarTendenciaMensual(e.target.value));
+    }, []);
+
+    await cargarTendenciaMensual("");
+
+    await seguro(async () => {
+        const movil = (await obtener("/delitos/resumen-por-movil-victima")).sort((a, b) => a.total_casos - b.total_casos);
+        const total = movil.reduce((s, d) => s + d.total_casos, 0);
+        crearOActualizar("gMovil", {
+            type: "bar",
+            data: { labels: movil.map(d => d.movil), datasets: [{ label: "Casos", data: movil.map(d => d.total_casos), backgroundColor: "#7FA6A0" }] },
             options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { x: { ticks: { autoSkip: false, maxRotation: 60, minRotation: 60 } } }
+                indexAxis: "y", responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString("es-CO")} casos (${((ctx.raw/total)*100).toFixed(1)}%)` } },
+                    datalabels: { display: true, anchor: "end", align: "end", color: "#5A6672", font: { size: 13, weight: "bold" }, formatter: v => v.toLocaleString("es-CO") }
+                },
+                scales: { x: { ticks: { font: { size: 13 } } }, y: { ticks: { font: { size: 14 } } } }
             }
         });
-    }
+    }, ["gMovil"]);
 
-    // --- Tipología ---
-    const resTipologia = await fetch(`${API}/delitos/resumen-por-tipologia${query}`);
-    const dataTipologia = await resTipologia.json();
-
-    if (chartTipologia) {
-        chartTipologia.data.labels = dataTipologia.map(d => d.tipologia);
-        chartTipologia.data.datasets[0].data = dataTipologia.map(d => d.total_casos);
-        chartTipologia.update();
-    } else {
-        chartTipologia = new Chart(document.getElementById("graficoTipologia"), {
+    await seguro(async () => {
+        const sexo = await obtener("/delitos/resumen-por-sexo");
+        crearOActualizar("gSexoChico", {
             type: "doughnut",
-            data: {
-                labels: dataTipologia.map(d => d.tipologia),
-                datasets: [{
-                    data: dataTipologia.map(d => d.total_casos),
-                    backgroundColor: ["#3f6fa8", "#e07a5f", "#81b29a", "#f2cc8f", "#a8577e"]
-                }]
-            },
+            data: { labels: sexo.map(d => d.sexo), datasets: [{ data: sexo.map(d => d.total_casos), backgroundColor: sexo.map(d => colorPara(d.sexo)) }] },
+            options: { responsive: true, plugins: {
+                legend: { position: "bottom", labels: { font: { size: 13 } } },
+                datalabels: { color: "white", font: { weight: "bold", size: 13 }, formatter: (v, ctx) => { const total = ctx.chart.data.datasets[0].data.reduce((a,b) => a+b, 0); return ((v/total)*100).toFixed(1) + "%"; } }
+            } }
+        });
+    }, ["gSexoChico"]);
+
+    await seguro(async () => {
+        const piramide = await obtener("/delitos/piramide-edad-sexo");
+        const sinDatoNoDisponible = piramide.filter(d => d.rango !== "NO DISPONIBLE");
+        const rangosEdad = [...new Set(sinDatoNoDisponible.map(d => d.rango))];
+        const masculino = rangosEdad.map(r => sinDatoNoDisponible.find(d => d.rango === r && d.sexo === "MASCULINO")?.total_casos || 0);
+        const femenino = rangosEdad.map(r => -(sinDatoNoDisponible.find(d => d.rango === r && d.sexo === "FEMENINO")?.total_casos || 0));
+        const sinDato = piramide.filter(d => d.rango === "NO DISPONIBLE").reduce((s, d) => s + d.total_casos, 0);
+
+        crearOActualizar("gPiramide", {
+            type: "bar",
+            data: { labels: rangosEdad, datasets: [
+                { label: "Femenino", data: femenino, backgroundColor: "#B0707A" },
+                { label: "Masculino", data: masculino, backgroundColor: "#3B5A6E" }
+            ] },
             options: {
-                responsive: true,
-                plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 10 } } } }
+                indexAxis: "y", responsive: true,
+                plugins: {
+                    legend: { labels: { font: { size: 13 } } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${Math.abs(ctx.raw).toLocaleString("es-CO")} casos` } }
+                },
+                scales: { x: { ticks: { callback: v => Math.abs(v).toLocaleString("es-CO"), font: { size: 13 } } }, y: { ticks: { font: { size: 13 } } } }
             }
         });
-    }
+        if (sinDato > 0) {
+            document.getElementById("gPiramide").parentElement.insertAdjacentHTML("beforeend",
+                `<p style="color:var(--texto-suave); font-size:14px; margin-top:12px;">Además, ${sinDato.toLocaleString("es-CO")} casos no tienen edad registrada y no aparecen en esta gráfica.</p>`);
+        }
+    }, ["gPiramide"]);
 }
 
 async function cargarDatos() {
-    try {
-        // --- Tendencia temporal (no cambia con el filtro, se carga una sola vez) ---
-        const resTemporal = await fetch(`${API}/delitos/resumen-temporal`);
-        const dataTemporal = await resTemporal.json();
+    Chart.register(ChartDataLabels);
+    Chart.defaults.plugins.datalabels = { display: false };
 
+    await seguro(async () => {
+        const temporal = await obtener("/delitos/resumen-temporal");
         const porAnio = {};
-        dataTemporal.forEach(d => {
-            porAnio[d.anio] = (porAnio[d.anio] || 0) + d.total_casos;
-        });
-        const anios = Object.keys(porAnio).sort();
-
-        chartTemporal = new Chart(document.getElementById("graficoTemporal"), {
+        temporal.forEach(d => { porAnio[d.anio] = (porAnio[d.anio] || 0) + d.total_casos; });
+        crearOActualizar("g5", {
             type: "line",
-            data: {
-                labels: anios,
-                datasets: [{
-                    label: "Casos por año",
-                    data: anios.map(a => porAnio[a]),
-                    borderColor: "#e07a5f",
-                    backgroundColor: "rgba(224,122,95,0.15)",
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { responsive: true }
+            data: { labels: Object.keys(porAnio), datasets: [{ label: "Casos", data: Object.values(porAnio), borderColor: "#B0707A", backgroundColor: "rgba(176,112,122,0.10)", fill: true, tension: 0.3, pointRadius: 4 }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 13 } } }, y: { ticks: { font: { size: 13 } } } } }
         });
 
-        // Llenar el filtro de años dinámicamente con los años que sí existen en los datos
+        const anios = Object.keys(porAnio).sort();
         const selectAnio = document.getElementById("filtroAnio");
         anios.forEach(a => {
             const opcion = document.createElement("option");
-            opcion.value = a;
-            opcion.text = a == "2026" ? `${a} (año incompleto)` : a;
+            opcion.value = a; opcion.text = a == "2026" ? `${a} (incompleto)` : a;
             selectAnio.appendChild(opcion);
         });
+        selectAnio.addEventListener("change", (e) => cargarDelitos(e.target.value));
+    }, ["g5"]);
 
-        selectAnio.addEventListener("change", (e) => {
-            cargarComunaYTipologia(e.target.value);
+    await cargarDelitos("");
+    await cargarSeccionHoraria();
+
+    await seguro(async () => {
+        const barrios = (await obtener("/delitos/resumen-por-barrio")).filter(b => b.total_casos !== null).sort((a, b) => b.total_casos - a.total_casos).slice(0, 10);
+        crearOActualizar("g16", {
+            type: "bar",
+            data: { labels: barrios.map(d => d.barrio), datasets: [{ label: "Casos", data: barrios.map(d => d.total_casos), backgroundColor: "#B0707A" }] },
+            options: { indexAxis: "y", responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 13 } } }, y: { ticks: { font: { size: 14 } } } } }
         });
+    }, ["g16"]);
 
-        // --- Carga inicial (todos los años) ---
-        await cargarComunaYTipologia("");
+    let percepcion = [];
+    await seguro(async () => {
+        percepcion = await obtener("/encuestas/resumen-por-comuna");
+        document.getElementById("kpiEncuestas").innerText = percepcion.reduce((s, d) => s + d.total_respuestas, 0).toLocaleString("es-CO");
 
-        // --- Percepción ciudadana (encuestas) ---
-        const resPercepcion = await fetch(`${API}/encuestas/resumen-por-comuna`);
-        const dataPercepcion = await resPercepcion.json();
-
-        if (dataPercepcion.length === 0) {
-            document.getElementById("graficoPercepcion").parentElement.innerHTML +=
-                "<p style='color:#999; font-size:13px;'>Aún no hay suficientes respuestas de encuesta para mostrar este gráfico.</p>";
-        } else {
-            chartPercepcion = new Chart(document.getElementById("graficoPercepcion"), {
-                type: "bar",
-                data: {
-                    labels: dataPercepcion.map(d => d.comuna),
-                    datasets: [
-                        {
-                            label: "Seguridad de día",
-                            data: dataPercepcion.map(d => d.promedio_seguridad_dia),
-                            backgroundColor: "#81b29a"
-                        },
-                        {
-                            label: "Seguridad de noche",
-                            data: dataPercepcion.map(d => d.promedio_seguridad_noche),
-                            backgroundColor: "#3f6fa8"
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: { y: { min: 0, max: 5 } }
-                }
-            });
-        }
-
-               // --- Sentimiento en redes sociales (YouTube) ---
-        const resSentimiento = await fetch(`${API}/redes-sociales/resumen-sentimiento`);
-        const dataSentimiento = await resSentimiento.json();
-
-        const coloresSentimiento = {
-            "POSITIVO": "#81b29a",
-            "NEGATIVO": "#e07a5f",
-            "NEUTRAL": "#c9c9c9"
-        };
-
-        new Chart(document.getElementById("graficoSentimiento"), {
-            type: "doughnut",
-            data: {
-                labels: dataSentimiento.map(d => d.sentimiento),
-                datasets: [{
-                    data: dataSentimiento.map(d => d.total),
-                    backgroundColor: dataSentimiento.map(d => coloresSentimiento[d.sentimiento] || "#999")
-                }]
-            },
-            options: {
+        if (percepcion.length > 0) {
+            const totalResp = percepcion.reduce((s, d) => s + d.total_respuestas, 0);
+            crearOActualizar("g7", { type: "bar", data: { labels: percepcion.map(d => `${d.comuna} (${d.total_respuestas} resp.)`), datasets: [
+                { label: "De día", data: percepcion.map(d => d.promedio_seguridad_dia), backgroundColor: "#C2A66B" },
+                { label: "De noche", data: percepcion.map(d => d.promedio_seguridad_noche), backgroundColor: "#3B5A6E" }
+            ] }, options: {
                 responsive: true,
-                plugins: { legend: { position: "bottom" } }
+                plugins: {
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}/5` } },
+                    legend: { labels: { font: { size: 13 } } },
+                    datalabels: { display: true, anchor: "end", align: "top", color: "#5A6672", font: { size: 13, weight: "bold" }, formatter: v => v.toFixed(1) }
+                },
+                scales: {
+                    x: { ticks: { font: { size: 13 } } },
+                    y: { min: 0, max: 5, title: { display: true, text: "Percepción de seguridad: 1 = muy inseguro, 5 = muy seguro", font: { size: 13 } }, ticks: { font: { size: 13 } } }
+                }
+            } });
+            if (totalResp < 5) {
+                document.getElementById("g7").parentElement.insertAdjacentHTML("beforeend",
+                    `<p style="color:var(--texto-suave); font-size:14px; margin-top:12px;">Nota: solo hay ${totalResp} respuesta(s) registradas hasta ahora, aún no es una muestra representativa.</p>`);
             }
+        } else {
+            marcarError("g7", "Sin respuestas de encuesta aún");
+        }
+    }, ["g7"]);
+
+    await seguro(async () => {
+        const sentimiento = await obtener("/redes-sociales/resumen-sentimiento");
+        const totalSent = sentimiento.reduce((s, d) => s + d.total, 0);
+        document.getElementById("kpiComentarios").innerText = totalSent.toLocaleString("es-CO");
+        const colores = { POSITIVO: "#6FA287", NEGATIVO: "#B0707A", NEUTRAL: "#B5B0A8" };
+        const etiquetasLegibles = { POSITIVO: "Positivo", NEGATIVO: "Negativo", NEUTRAL: "Neutral" };
+        crearOActualizar("g2", {
+            type: "doughnut",
+            data: { labels: sentimiento.map(d => `${etiquetasLegibles[d.sentimiento]} (${d.total} comentarios)`), datasets: [{ data: sentimiento.map(d => d.total), backgroundColor: sentimiento.map(d => colores[d.sentimiento]) }] },
+            options: { responsive: true, plugins: {
+                legend: { position: "bottom", labels: { font: { size: 13 }, padding: 14 } },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${((ctx.raw/totalSent)*100).toFixed(1)}%` } },
+                datalabels: { color: "white", font: { weight: "bold", size: 13 }, formatter: (v) => ((v/totalSent)*100).toFixed(1) + "%" }
+            } }
         });
+        document.getElementById("g2").parentElement.insertAdjacentHTML("beforeend",
+            `<p style="color:var(--texto-suave); font-size:14px; margin-top:12px;">Basado en ${totalSent} comentarios de videos de Vanguardia sobre seguridad y convivencia en Bucaramanga, analizados con inteligencia artificial.</p>`);
+    }, ["g2"]);
 
-        // --- Lista de comentarios recientes ---
-        const resComentarios = await fetch(`${API}/redes-sociales/comentarios-recientes?limite=15`);
-        const dataComentarios = await resComentarios.json();
-
-        const iconoSentimiento = { POSITIVO: "🟢", NEGATIVO: "🔴", NEUTRAL: "⚪" };
-        const listaHtml = dataComentarios.map(c => `
-            <div style="padding:8px 0; border-bottom:1px solid #eee;">
-                <span>${iconoSentimiento[c.sentimiento] || ""} <strong>${c.sentimiento}</strong> (${c.confianza}%)</span>
-                <p style="margin:4px 0; color:#333;">"${c.comentario}"</p>
-                <p style="margin:0; color:#999; font-size:11px;">${c.video_titulo}</p>
-            </div>
-        `).join("");
-        document.getElementById("listaComentarios").innerHTML = listaHtml;
-       
-        document.getElementById("estado").innerText =
-            "Datos cargados correctamente — " + new Date().toLocaleString("es-CO");
-
-    } catch (error) {
-        document.getElementById("estado").innerText =
-            "Error al conectar con la API. Verifica que el servidor esté corriendo. (" + error + ")";
-        console.error(error);
-    }
+    await seguro(async () => {
+        const comentarios = await obtener("/redes-sociales/comentarios-recientes?limite=15");
+        const clase = { POSITIVO: "sent-positivo", NEGATIVO: "sent-negativo", NEUTRAL: "sent-neutral" };
+        document.getElementById("listaComentarios").innerHTML = comentarios.map(c => `<div class="comentario"><span class="etiqueta-sentimiento ${clase[c.sentimiento] || ''}">${c.sentimiento} · ${c.confianza}%</span><p class="texto">"${c.comentario}"</p><p class="origen">${c.video_titulo}</p></div>`).join("");
+    }, []);
 }
-
 cargarDatos();
 
-function agregarMensajeChat(texto, esUsuario) {
-    const ventana = document.getElementById("chatVentana");
-    const burbuja = document.createElement("div");
-    burbuja.style.margin = "8px 0";
-    burbuja.style.padding = "10px";
-    burbuja.style.borderRadius = "8px";
-    burbuja.style.maxWidth = "80%";
-    burbuja.style.whiteSpace = "pre-wrap";
-    if (esUsuario) {
-        burbuja.style.background = "#3f6fa8";
-        burbuja.style.color = "white";
-        burbuja.style.marginLeft = "auto";
-    } else {
-        burbuja.style.background = "#e9ecef";
-        burbuja.style.color = "#1a1a2e";
+// ============ Informe con IA, exportado directamente a PDF con formato ============
+
+function pintarMarkdownEnPDF(pdf, texto) {
+    const margen = 15;
+    const anchoUtil = pdf.internal.pageSize.getWidth() - margen * 2;
+    const altoPagina = pdf.internal.pageSize.getHeight();
+    let y = margen;
+
+    function saltoPagina(alturaNecesaria) {
+        if (y + alturaNecesaria > altoPagina - margen) {
+            pdf.addPage();
+            y = margen;
+        }
     }
-    burbuja.innerText = texto;
-    ventana.appendChild(burbuja);
-    ventana.scrollTop = ventana.scrollHeight;
+
+    function escribirConNegritas(texto, fontSize, xInicio, anchoDisponible) {
+        pdf.setFontSize(fontSize);
+        const alturaLinea = fontSize * 0.42;
+        const partes = texto.split(/(\*\*[^*]+\*\*)/g).filter(p => p !== "");
+        let x = xInicio;
+        saltoPagina(alturaLinea);
+
+        partes.forEach(parte => {
+            const esNegrita = parte.startsWith("**") && parte.endsWith("**");
+            const contenido = esNegrita ? parte.slice(2, -2) : parte;
+            pdf.setFont("helvetica", esNegrita ? "bold" : "normal");
+            const palabras = contenido.split(" ");
+            palabras.forEach((palabra, i) => {
+                const conEspacio = i < palabras.length - 1 ? palabra + " " : palabra;
+                if (conEspacio === "") return;
+                const ancho = pdf.getTextWidth(conEspacio);
+                if (x + ancho > xInicio + anchoDisponible) {
+                    y += alturaLinea;
+                    saltoPagina(alturaLinea);
+                    x = xInicio;
+                }
+                pdf.text(conEspacio, x, y);
+                x += ancho;
+            });
+        });
+        y += alturaLinea + 3;
+    }
+
+    const lineas = texto.split("\n");
+
+    lineas.forEach(lineaOriginal => {
+        const linea = lineaOriginal.trim();
+
+        if (linea === "") { y += 2; return; }
+
+        if (linea === "---") {
+            saltoPagina(6);
+            pdf.setDrawColor(225, 228, 232);
+            pdf.line(margen, y, margen + anchoUtil, y);
+            y += 6;
+            return;
+        }
+
+        if (linea.startsWith("### ")) {
+            saltoPagina(10);
+            pdf.setFont("helvetica", "bold"); pdf.setFontSize(13);
+            pdf.setTextColor(59, 90, 110);
+            pdf.text(linea.replace(/^### /, "").replace(/\*\*/g, ""), margen, y);
+            y += 8; pdf.setTextColor(31, 41, 51);
+            return;
+        }
+        if (linea.startsWith("## ")) {
+            saltoPagina(13);
+            pdf.setFont("helvetica", "bold"); pdf.setFontSize(15);
+            pdf.setTextColor(59, 90, 110);
+            pdf.text(linea.replace(/^## /, "").replace(/\*\*/g, ""), margen, y);
+            y += 7;
+            pdf.setDrawColor(194, 166, 107);
+            pdf.setLineWidth(0.6);
+            pdf.line(margen, y, margen + anchoUtil, y);
+            pdf.setLineWidth(0.2);
+            y += 6; pdf.setTextColor(31, 41, 51);
+            return;
+        }
+        if (linea.startsWith("# ")) {
+            saltoPagina(15);
+            pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
+            pdf.setTextColor(59, 90, 110);
+            pdf.text(linea.replace(/^# /, "").replace(/\*\*/g, ""), margen, y);
+            y += 10; pdf.setTextColor(31, 41, 51);
+            return;
+        }
+
+        const coincideLista = linea.match(/^[-*]\s+(.*)/) || linea.match(/^\d+\.\s+(.*)/);
+        if (coincideLista) {
+            const marcador = /^\d+\./.test(linea) ? linea.match(/^\d+\./)[0] : "•";
+            saltoPagina(6);
+            pdf.setFont("helvetica", "normal"); pdf.setFontSize(11);
+            pdf.setTextColor(31, 41, 51);
+            pdf.text(marcador, margen, y);
+            escribirConNegritas(coincideLista[1], 11, margen + 7, anchoUtil - 7);
+            return;
+        }
+
+        pdf.setTextColor(31, 41, 51);
+        escribirConNegritas(linea, 11, margen, anchoUtil);
+    });
 }
 
-async function enviarMensajeChat() {
-    const input = document.getElementById("chatInput");
-    const boton = document.getElementById("chatBoton");
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    agregarMensajeChat(texto, true);
-    input.value = "";
+async function descargarInformePDF() {
+    const boton = document.getElementById("btnDescargarPDF");
     boton.disabled = true;
-    agregarMensajeChat("Pensando...", false);
+    boton.innerText = "Generando informe con IA...";
 
     try {
-        const res = await fetch(`${API}/chat/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mensaje: texto })
-        });
+        const res = await fetch(`${API}/chat/informe`);
         const data = await res.json();
 
-        document.getElementById("chatVentana").lastChild.remove(); // quita "Pensando..."
-        agregarMensajeChat(data.respuesta, false);
+        boton.innerText = "Creando PDF...";
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF("p", "mm", "a4");
+
+        pdf.setFont("helvetica", "bold"); pdf.setFontSize(16);
+        pdf.setTextColor(59, 90, 110);
+        pdf.text("Plataforma de Cultura Ciudadana - Bucaramanga", 15, 18);
+        pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+        pdf.setTextColor(90, 102, 114);
+        pdf.text(`Informe generado con inteligencia artificial — ${new Date().toLocaleString("es-CO")}`, 15, 25);
+        pdf.setDrawColor(194, 166, 107);
+        pdf.setLineWidth(0.8);
+        pdf.line(15, 29, pdf.internal.pageSize.getWidth() - 15, 29);
+        pdf.setLineWidth(0.2);
+
+        pdf.setTextColor(31, 41, 51);
+        pintarMarkdownEnPDF(pdf, data.informe);
+
+        pdf.save("informe-ia-cultura-ciudadana-bucaramanga.pdf");
     } catch (error) {
-        document.getElementById("chatVentana").lastChild.remove();
-        agregarMensajeChat("Hubo un error al conectar con el asistente.", false);
+        console.error(error);
+        alert("Hubo un problema generando el informe. Verifica que el servidor esté corriendo e inténtalo de nuevo.");
     } finally {
         boton.disabled = false;
+        boton.innerText = "Descargar informe (PDF)";
     }
 }
+document.getElementById("btnDescargarPDF").addEventListener("click", descargarInformePDF);
 
+function agregarMensajeChat(texto, esUsuario) {
+    const v = document.getElementById("chatVentana");
+    const b = document.createElement("div");
+    b.className = "msg " + (esUsuario ? "msg-usuario" : "msg-agente");
+    b.innerText = texto;
+    v.appendChild(b);
+    v.scrollTop = v.scrollHeight;
+}
+async function enviarMensajeChat() {
+    const input = document.getElementById("chatInput"), boton = document.getElementById("chatBoton");
+    const texto = input.value.trim();
+    if (!texto) return;
+    agregarMensajeChat(texto, true);
+    input.value = ""; boton.disabled = true;
+    agregarMensajeChat("Consultando datos...", false);
+    try {
+        const res = await fetch(`${API}/chat/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mensaje: texto }) });
+        const data = await res.json();
+        document.getElementById("chatVentana").lastChild.remove();
+        agregarMensajeChat(data.respuesta, false);
+    } catch (e) {
+        document.getElementById("chatVentana").lastChild.remove();
+        agregarMensajeChat("No se pudo conectar con el asistente.", false);
+    } finally { boton.disabled = false; }
+}
 document.getElementById("chatBoton").addEventListener("click", enviarMensajeChat);
-document.getElementById("chatInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") enviarMensajeChat();
-});
-
+document.getElementById("chatInput").addEventListener("keypress", (e) => { if (e.key === "Enter") enviarMensajeChat(); });
 agregarMensajeChat("Hola, soy el asistente de la plataforma. Pregúntame sobre delitos, percepción ciudadana o redes sociales en Bucaramanga.", false);
 </script>
+
+</body>
+</html>
